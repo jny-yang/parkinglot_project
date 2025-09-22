@@ -1,0 +1,6 @@
+flask
+gunicorn
+psycopg2-binary
+copy
+collections
+heapq
