@@ -27,6 +27,8 @@ def initialize_db():
     cursor.close()
     conn.close()
 
+initialize_db()
+
 @app.route("/park", methods=["POST"])
 def parking_event():
     data = request.get_json()
@@ -50,7 +52,20 @@ def retrieving_event():
         "message": f"Car {plate} retrieved.",
         "slots": parkinglot
     })
+
+@app.route("/testdb")
+def test_db():
+    import psycopg2
+    try:
+        conn = psycopg2.connect(DB_CONFIG)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM \"ParkingRecords\";")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({"success": True, "rows": rows})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
     
 if __name__ == "__main__":
-    initialize_db()
     app.run(host="0.0.0.0", port=10000)
