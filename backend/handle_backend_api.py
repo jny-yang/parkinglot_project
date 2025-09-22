@@ -27,7 +27,7 @@ def initialize_db():
     cursor.close()
     conn.close()
 
-@app.route("/parking", methods=["POST"])
+@app.route("/park", methods=["POST"])
 def parking_event():
     data = request.get_json()
     plate = data.get("plate")
@@ -39,7 +39,7 @@ def parking_event():
         "slots": parkinglot
     })
 
-@app.route("/retrieving", methods=["POST"])
+@app.route("/take", methods=["POST"])
 def retrieving_event():
     data = request.get_json()
     plate = data.get("plate")
