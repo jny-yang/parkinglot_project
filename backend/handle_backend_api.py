@@ -27,22 +27,30 @@ def initialize_db():
     cursor.close()
     conn.close()
 
-@app.route("/parking_event", methods=["POST"])
+@app.route("/parking", methods=["POST"])
 def parking_event():
     data = request.get_json()
-    plate_number = data.get("plate_number")
+    plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    parking(parkinglot, entrance, plate_number)
-    return jsonify({"status": "success", "message": f"Car {plate_number} parked."})
+    parking(parkinglot, entrance, plate)
+    return jsonify({
+        "success": True,
+        "message": f"Car {plate} parked.",
+        "slots": parkinglot
+    })
 
-@app.route("/retrieving_event", methods=["POST"])
+@app.route("/retrieving", methods=["POST"])
 def retrieving_event():
     data = request.get_json()
-    plate_number = data.get("plate_number")
+    plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    receiving(parkinglot, entrance, plate_number)
-    return jsonify({"status": "success", "message": f"Car {plate_number} retrieved."})
-
+    receiving(parkinglot, entrance, plate)
+    return jsonify({
+        "success": True,
+        "message": f"Car {plate} retrieved.",
+        "slots": parkinglot
+    })
+    
 if __name__ == "__main__":
     initialize_db()
     app.run(host="0.0.0.0", port=10000)
