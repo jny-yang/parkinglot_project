@@ -63,19 +63,18 @@ def test_db():
         conn = psycopg2.connect(external_url)
         cur = conn.cursor()
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS "ParkingRecords" (
-                plate_num VARCHAR(10) PRIMARY KEY,
-                slot_num INT
-            );
-            """)
-            conn.commit()
-            # 測試查詢
-            cursor.execute('SELECT * FROM "ParkingRecords";')
-            rows = cursor.fetchall()
-    
-            cursor.close()
-            conn.close()
-            return {"success": True, "rows": rows, "message": "Table exists or created successfully"}
+        CREATE TABLE IF NOT EXISTS "ParkingRecords" (
+            plate_num VARCHAR(10) PRIMARY KEY,
+            slot_num INT);
+        """)
+        conn.commit()
+        # 測試查詢
+        cursor.execute('SELECT * FROM "ParkingRecords";')
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+        return {"success": True, "rows": rows, "message": "Table exists or created successfully"}
     except Exception as e:
         return {"success": False, "error": str(e)}
     
