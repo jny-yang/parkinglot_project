@@ -1,88 +1,267 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>智慧停車場</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>停車場系統（25 格）</title>
   <style>
     body {
-      display: flex;
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
       padding: 20px;
     }
-    .lot {
+
+    .container {
       display: grid;
-      grid-template-columns: repeat(5, 60px);
-      grid-gap: 5px;
-      margin-right: 50px;
+      grid-template-columns: 7fr 3fr; /* 左邊 6 成，右邊 4 成 */
+      gap: 20px;
+      max-width: 1100px;
+      margin: auto;
+      align-items: start;
     }
-    .slot {
-      width: 60px;
-      height: 60px;
-      background: #ccc;
-      border: 2px solid #999;
+
+    .parking-lot {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .parking-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .spot {
+      background: #ffffff;
+      color: #000000;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
+      cursor: default;
+      transition: all 0.15s ease;
+      user-select: none;
+      text-align: center;
+      font-size: 1rem;
+      padding: 6px;
+      word-break: break-word;
     }
-    .panel {
-      background: #fff;
+
+    .spot.occupied {
+      background: #facc15;
+      border: 2px solid #eab308;
+      color: #000;
+    }
+
+    .control {
+      background: #1e293b;
+      border-radius: 10px;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .screen {
+      background: #ffffff;   /* 白底 */
+      color: #1e3a8a;        /* 深藍字 */
+      border: 2px solid #1e3a8a; /* 深藍邊框 */
+      font-family: monospace;
+      text-align: center;
+      padding: 20px 24px;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      width: 250px;
-    }
-    .panel input, .panel button {
       width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
+      font-size: 1.6rem;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .steps {
-      margin-top: 20px;
+
+    input {
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      font-size: 1.2rem;
+      text-align: center;
     }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    button {
+      padding: 18px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      width: 100%;
+      max-width: 180px;
+    }
+
+    .park-btn {
+      background: #10b981;
+      color: white;
+    }
+
+    .park-btn:hover {
+      background: #059669;
+    }
+
+    .take-btn {
+      background: #f97316;
+      color: white;
+    }
+
+    .take-btn:hover {
+      background: #c2410c;
+    }
+
+    h1 { text-align:center; margin-bottom: 12px; }
   </style>
 </head>
 <body>
+  <h1>智慧停車場（25 格）</h1>
+  <div class="container">
+    <!-- 停車格 -->
+    <div class="parking-lot">
+      <h2 style="margin-top:0; margin-bottom:12px;">停車格狀態</h2>
+      <div class="parking-grid" id="parkingGrid"></div>
+    </div>
 
-  <!-- 停車場 -->
-  <div class="lot">
-    {% for row in parking %}
-      {% for cell in row %}
-        <div class="slot">{{ cell if cell != ' ' else '' }}</div>
-      {% endfor %}
-    {% endfor %}
-  </div>
-
-  <!-- 右側控制面板 -->
-  <div class="panel">
-    <h3>停車</h3>
-    <form method="POST" action="/park">
-      <input type="text" name="plate_num" placeholder="輸入車牌" required>
-      <input type="number" name="x" placeholder="X座標 (0-4)" required>
-      <input type="number" name="y" placeholder="Y座標 (0-4)" required>
-      <button type="submit">停車</button>
-    </form>
-
-    <h3>取車</h3>
-    <form method="POST" action="/retrieve">
-      <input type="text" name="plate_num" placeholder="輸入車牌" required>
-      <input type="number" name="goal_x" placeholder="目標X (0-4)" required>
-      <input type="number" name="goal_y" placeholder="目標Y (0-4)" required>
-      <button type="submit">取車</button>
-    </form>
-
-    {% if steps %}
-      <div class="steps">
-        <h4>移動步驟</h4>
-        <ul>
-          {% for step in steps %}
-            <li>{{ step[0] }} 往 {{ step[1] }}</li>
-          {% endfor %}
-        </ul>
+    <!-- 控制區 -->
+    <div class="control">
+      <div class="screen" id="screen">系統準備就緒</div>
+      <input type="text" id="plateInput" placeholder="輸入車牌號碼 (例：ABC-1234)" />
+      <div class="btn-group">
+        <button class="park-btn" id="parkBtn">停車</button>
+        <button class="take-btn" id="takeBtn">取車</button>
       </div>
-    {% endif %}
+      <div class="btn-group">
+        <button class="take-btn" id="resetBtn" style="background:#3b82f6;">清空停車場</button>
+      </div>
+    </div>
   </div>
 
+  <script>
+    const parkingGrid = document.getElementById('parkingGrid');
+    const screen = document.getElementById('screen');
+    const plateInput = document.getElementById('plateInput');
+    const parkBtn = document.getElementById('parkBtn');
+    const takeBtn = document.getElementById('takeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // 產生 25 格 DOM（一次）
+    const TOTAL = 25;
+    for (let i = 0; i < TOTAL; i++) {
+      const spot = document.createElement('div');
+      spot.className = 'spot';
+      spot.dataset.index = i;
+      spot.textContent = i + 1;
+      parkingGrid.appendChild(spot);
+    }
+
+    function showMessage(msg) {
+      screen.textContent = msg;
+    }
+
+    function renderSlots(slots) {
+      const doms = document.querySelectorAll('.spot');
+      for (let i = 0; i < TOTAL; i++) {
+        const plate = slots[i];
+        const el = doms[i];
+        if (plate) {
+          el.classList.add('occupied');
+          el.textContent = plate;
+        } else {
+          el.classList.remove('occupied');
+          el.textContent = i + 1;
+        }
+      }
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        if (data && data.slots) renderSlots(data.slots);
+      } catch (err) {
+        showMessage('無法連線到伺服器');
+        console.error(err);
+      }
+    }
+
+    parkBtn.addEventListener('click', async () => {
+      const plate = plateInput.value.trim();
+      if (!plate) {
+        showMessage('請輸入車牌號碼');
+        return;
+      }
+      try {
+        const res = await fetch('/park', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ plate })
+        });
+        const data = await res.json();
+        showMessage(data.message || (data.success ? '停車成功' : '停車失敗'));
+        if (data.slots) renderSlots(data.slots);
+        else await refreshStatus();
+      } catch (err) {
+        showMessage('執行停車時發生錯誤');
+        console.error(err);
+      }
+    });
+
+    takeBtn.addEventListener('click', async () => {
+      const plate = plateInput.value.trim();
+      if (!plate) {
+        showMessage('請輸入車牌號碼');
+        return;
+      }
+      try {
+        const res = await fetch('/take', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ plate })
+        });
+        const data = await res.json();
+        showMessage(data.message || (data.success ? '取車成功' : '取車失敗'));
+        if (data.slots) renderSlots(data.slots);
+        else await refreshStatus();
+      } catch (err) {
+        showMessage('執行取車時發生錯誤');
+        console.error(err);
+      }
+    });
+
+    resetBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/reset', { method: 'POST' });
+        const data = await res.json();
+        showMessage(data.message || '停車場已清空');
+        if (data.slots) renderSlots(data.slots);
+        else await refreshStatus();
+      } catch (err) {
+        showMessage('執行清空時發生錯誤');
+        console.error(err);
+      }
+    });
+
+    // 頁面載入時抓一次狀態
+    refreshStatus();
+  </script>
 </body>
 </html>
