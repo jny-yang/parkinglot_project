@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify
 from integrate_the_code import initialize, parking, receiving, inspecting
+import psycopg2
 
 app = Flask(__name__)
 
 DB_CONFIG = {
     "host": "dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com",
-    "database": "parkinglot_db",
-    "user": "parkinglot_user",
-    "password": "你的密碼",
+    "database": "parkinglot_db_hgx4",
+    "user": "parkinglot_db_hgx4_user",
+    "password": "wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7",
     "port": 5432
 }
 
@@ -55,7 +56,6 @@ def retrieving_event():
 
 @app.route("/testdb")
 def test_db():
-    import psycopg2
     try:
         conn = psycopg2.connect(DB_CONFIG)
         cur = conn.cursor()
