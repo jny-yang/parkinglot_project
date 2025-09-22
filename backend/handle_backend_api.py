@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from integrate_the_code.py import initialize, parking, receiving, inspecting
+from integrate_the_code import initialize, parking, receiving, inspecting
 
 app = Flask(__name__)
 
