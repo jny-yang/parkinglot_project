@@ -4,17 +4,19 @@ import psycopg2
 
 app = Flask(__name__)
 
-DB_CONFIG = {
-    "host": "dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com",
-    "database": "parkinglot_db_hgx4",
-    "user": "parkinglot_db_hgx4_user",
-    "password": "wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7",
-    "port": 5432
-}
+# DB_CONFIG = {
+#     "host": "dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com",
+#     "database": "parkinglot_db_hgx4",
+#     "user": "parkinglot_db_hgx4_user",
+#     "password": "wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7",
+#     "port": 5432
+# }
 
 def initialize_db():
     # 在啟動 Flask 時檢查並建立資料表
-    conn = psycopg2.connect(**DB_CONFIG) # **為展開 dict
+    # conn = psycopg2.connect(**DB_CONFIG) # **為展開 dict
+    external_url = "postgresql://parkinglot_db_hgx4_user:wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7@dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com/parkinglot_db_hgx4"
+    conn = psycopg2.connect(external_url)
     cursor = conn.cursor()
 
     create_table_query = """
