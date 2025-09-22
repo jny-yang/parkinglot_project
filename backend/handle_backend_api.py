@@ -62,13 +62,22 @@ def test_db():
         external_url = "postgresql://parkinglot_db_hgx4_user:wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7@dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com/parkinglot_db_hgx4"
         conn = psycopg2.connect(external_url)
         cur = conn.cursor()
-        cur.execute("SELECT * FROM \"ParkingRecords\";")
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-        return jsonify({"success": True, "rows": rows})
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS "ParkingRecords" (
+                plate_num VARCHAR(10) PRIMARY KEY,
+                slot_num INT
+            );
+            """)
+            conn.commit()
+            # 測試查詢
+            cursor.execute('SELECT * FROM "ParkingRecords";')
+            rows = cursor.fetchall()
+    
+            cursor.close()
+            conn.close()
+            return {"success": True, "rows": rows, "message": "Table exists or created successfully"}
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        return {"success": False, "error": str(e)}
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
