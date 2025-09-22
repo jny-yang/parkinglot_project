@@ -14,7 +14,7 @@ DB_CONFIG = {
 
 def initialize_db():
     # 在啟動 Flask 時檢查並建立資料表
-    conn = psycopg2.connect(DB_CONFIG)
+    conn = psycopg2.connect(**DB_CONFIG) # **為展開 dict
     cursor = conn.cursor()
 
     create_table_query = """
