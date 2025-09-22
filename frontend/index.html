@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>智慧停車場</title>
+  <style>
+    body {
+      display: flex;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .lot {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-gap: 5px;
+      margin-right: 50px;
+    }
+    .slot {
+      width: 60px;
+      height: 60px;
+      background: #ccc;
+      border: 2px solid #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .panel {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      width: 250px;
+    }
+    .panel input, .panel button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+    .steps {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 停車場 -->
+  <div class="lot">
+    {% for row in parking %}
+      {% for cell in row %}
+        <div class="slot">{{ cell if cell != ' ' else '' }}</div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <!-- 右側控制面板 -->
+  <div class="panel">
+    <h3>停車</h3>
+    <form method="POST" action="/park">
+      <input type="text" name="plate_num" placeholder="輸入車牌" required>
+      <input type="number" name="x" placeholder="X座標 (0-4)" required>
+      <input type="number" name="y" placeholder="Y座標 (0-4)" required>
+      <button type="submit">停車</button>
+    </form>
+
+    <h3>取車</h3>
+    <form method="POST" action="/retrieve">
+      <input type="text" name="plate_num" placeholder="輸入車牌" required>
+      <input type="number" name="goal_x" placeholder="目標X (0-4)" required>
+      <input type="number" name="goal_y" placeholder="目標Y (0-4)" required>
+      <button type="submit">取車</button>
+    </form>
+
+    {% if steps %}
+      <div class="steps">
+        <h4>移動步驟</h4>
+        <ul>
+          {% for step in steps %}
+            <li>{{ step[0] }} 往 {{ step[1] }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+</body>
+</html>
