@@ -210,7 +210,7 @@
         return;
       }
       try {
-        const res = await fetch('/park', {
+        const res = await fetch('https://parkinglot-backend-xs3p.onrender.com/park', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ plate })
@@ -232,7 +232,7 @@
         return;
       }
       try {
-        const res = await fetch('/take', {
+        const res = await fetch('https://parkinglot-backend-xs3p.onrender.com/take', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ plate })
