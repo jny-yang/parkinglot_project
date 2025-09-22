@@ -59,7 +59,7 @@ def retrieving_event():
 @app.route("/testdb")
 def test_db():
     try:
-        conn = psycopg2.connect(DB_CONFIG)
+        conn = psycopg2.connect(external_url)
         cur = conn.cursor()
         cur.execute("SELECT * FROM \"ParkingRecords\";")
         rows = cur.fetchall()
