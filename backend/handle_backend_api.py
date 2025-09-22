@@ -59,6 +59,7 @@ def retrieving_event():
 @app.route("/testdb")
 def test_db():
     try:
+        external_url = "postgresql://parkinglot_db_hgx4_user:wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7@dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com/parkinglot_db_hgx4"
         conn = psycopg2.connect(external_url)
         cur = conn.cursor()
         cur.execute("SELECT * FROM \"ParkingRecords\";")
