@@ -3,7 +3,7 @@ import psycopg2
 class InteractWithDatabase:
     def __init__(self):
         self.conn = psycopg2.connect(
-            host="dpg-d38hk4fdiees73cja7d0-a",     # Render 提供的 Host
+            host="dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com",     # Render 提供的 Host
             database="parkinglot_db_hgx4",    # 例如 parkinglot_db
             user="parkinglot_db_hgx4_user",        # 例如 postgres
             password="wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7",          # Render 提供的密碼
