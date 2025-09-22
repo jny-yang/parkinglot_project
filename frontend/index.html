@@ -192,16 +192,16 @@
       }
     }
 
-    async function refreshStatus() {
-      try {
-        const res = await fetch('/status');
-        const data = await res.json();
-        if (data && data.slots) renderSlots(data.slots);
-      } catch (err) {
-        showMessage('無法連線到伺服器');
-        console.error(err);
-      }
-    }
+    // async function refreshStatus() {
+    //   try {
+    //     const res = await fetch('/status');
+    //     const data = await res.json();
+    //     if (data && data.slots) renderSlots(data.slots);
+    //   } catch (err) {
+    //     showMessage('無法連線到伺服器');
+    //     console.error(err);
+    //   }
+    // }
 
     parkBtn.addEventListener('click', async () => {
       const plate = plateInput.value.trim();
@@ -247,18 +247,18 @@
       }
     });
 
-    resetBtn.addEventListener('click', async () => {
-      try {
-        const res = await fetch('/reset', { method: 'POST' });
-        const data = await res.json();
-        showMessage(data.message || '停車場已清空');
-        if (data.slots) renderSlots(data.slots);
-        else await refreshStatus();
-      } catch (err) {
-        showMessage('執行清空時發生錯誤');
-        console.error(err);
-      }
-    });
+    // resetBtn.addEventListener('click', async () => {
+    //   try {
+    //     const res = await fetch('/reset', { method: 'POST' });
+    //     const data = await res.json();
+    //     showMessage(data.message || '停車場已清空');
+    //     if (data.slots) renderSlots(data.slots);
+    //     else await refreshStatus();
+    //   } catch (err) {
+    //     showMessage('執行清空時發生錯誤');
+    //     console.error(err);
+    //   }
+    // });
 
     // 頁面載入時抓一次狀態
     refreshStatus();
