@@ -518,6 +518,8 @@ class CalculateExchangeCount:
     # BFS
     def bfs_search(self, start_state, target_car_id, destination):
         start_pos = self.find_car(start_state, target_car_id)
+        if start_pos == None:
+            return None, None  # 找不到
         q = deque()
         visited = set()
 
