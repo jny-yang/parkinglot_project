@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>智慧停車系統</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b);
+      margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+    .container { display:grid; grid-template-columns:65% 30%; gap:5%; width:95vw; height:90vh; align-items:center; }
+    .parking-lot { display:grid; grid-template-columns:repeat(5,95px); grid-gap:12px; justify-content:center; align-items:center; position:relative; }
+    .slot { width:95px; height:95px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .occupied { background:#ef4444; color:white; }
+    .empty { background:#22c55e; color:white; }
+    .path { background:#3b82f6 !important; }
+    .control { background:#0f172a; border-radius:15px; padding:20px; display:flex; flex-direction:column; gap:18px; align-items:center; height:100%; box-shadow:0 6px 15px rgba(0,0,0,0.4); }
+    .screen { background:#19183B; color:#E7F2EF; font-family:monospace; text-align:center; padding:15px; border-radius:10px; width:100%; font-size:1.3rem; flex-shrink:0; box-shadow:inset 0 0 8px rgb(161, 194, 189); }
+    input { font-size:1.2rem; border-radius:10px; padding:12px; width:90%; border:none; outline:none; background:#1e293b; color:#e2e8f0; box-shadow:inset 0 2px 5px rgba(0,0,0,0.5); }
+    button { font-size:1.2rem; border-radius:12px; padding:12px; width:90%; border:none; cursor:pointer; color:white; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.3); transition:transform 0.2s ease, box-shadow 0.3s ease; }
+    button:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,0.5); }
+    .park-btn { background:linear-gradient(135deg, #2563eb, #3b82f6); }
+    .retrieve-btn { background:linear-gradient(135deg, #ea580c, #f97316); }
+    .car { width:50px; height:50px; position:absolute; transition:transform 0.3s ease, left 0.3s ease, top 0.3s ease; z-index:10; transform-origin:center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div>
+      <h2 style="font-size:2rem; text-align:center; color:#e2e8f0; margin-bottom:15px;">停車場狀態</h2>
+      <div class="parking-lot" id="parkingLot"></div>
+    </div>
+    <div class="control">
+      <div class="screen" id="screen">請輸入車牌號碼</div>
+      <input type="text" id="carId" placeholder="車牌號碼">
+      <button class="park-btn" onclick="parkCar()">🚗 停車</button>
+      <button class="retrieve-btn" onclick="retrieveCar()">⛔ 取車</button>
+    </div>
+  </div>
+
+  <script>
+    const gridSize = 5;
+    const lotDiv = document.getElementById('parkingLot');
+    let carIcon;
+
+    function createCar() {
+      if (!carIcon) {
+        carIcon = document.createElement('img');
+        carIcon.src = "/static/car1.png";  // 更新成 car1.png
+        carIcon.className = "car";
+        lotDiv.appendChild(carIcon);
+      }
+      carIcon.style.display = "block";
+    }
+
+    async function loadParkingLot() {
+      let res = await fetch('/status');
+      let data = await res.json();
+      lotDiv.innerHTML = '';
+      data.forEach((slot, i) => {
+        let div = document.createElement('div');
+        div.className = 'slot ' + (slot ? 'occupied' : 'empty');
+        div.innerText = slot ? slot : i+1;
+        lotDiv.appendChild(div);
+      });
+      if (carIcon) lotDiv.appendChild(carIcon);
+    }
+
+    async function parkCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/park', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({car_id: carId})
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {
+        createCar();
+        animateCar(msg.path, true);
+      }
+      loadParkingLot();
+    }
+
+    async function retrieveCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/retrieve', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({car_id: carId})
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {
+        createCar();
+        animateCar(msg.path, false);
+      }
+    }
+
+    function animateCar(path, parking = true) {
+      const cellSize = 95;
+      const gap = 12;
+      const stepSize = cellSize + gap;
+      let i = 0;
+
+      const interval = setInterval(() => {
+        if (i >= path.length) {
+          clearInterval(interval);
+          if (parking) {
+            carIcon.style.transition = "transform 0.5s ease";
+            carIcon.style.transform += " scale(0.7)";
+            loadParkingLot(); // 停車後立即刷新
+          } else {
+            carIcon.style.transition = "transform 1s ease, left 1s ease, top 1s ease";
+            carIcon.style.transform = "scale(1.2)";
+            setTimeout(() => {
+              carIcon.style.display = "none";
+              loadParkingLot(); // ✅ 動畫結束後再刷新狀態
+            }, 1000);
+          }
+          return;
+        }
+
+        const [r, c] = path[i];
+        const slots = document.querySelectorAll('.slot');
+        const slot = slots[r*gridSize + c];
+        slot.classList.add("path");
+
+        const rect = slot.getBoundingClientRect();
+        const lotRect = lotDiv.getBoundingClientRect();
+        const targetX = rect.left - lotRect.left + (slot.offsetWidth - carIcon.offsetWidth)/2;
+        const targetY = rect.top - lotRect.top + (slot.offsetHeight - carIcon.offsetHeight)/2;
+
+        if (i > 0) {
+          const [pr, pc] = path[i-1];
+          if (r > pr) carIcon.style.transform = "rotate(90deg)";
+          else if (r < pr) carIcon.style.transform = "rotate(-90deg)";
+          else if (c > pc) carIcon.style.transform = "rotate(0deg)";
+          else if (c < pc) carIcon.style.transform = "rotate(180deg)";
+        }
+
+        carIcon.style.left = targetX + "px";
+        carIcon.style.top = targetY + "px";
+        i++;
+      }, 400);
+    }
+
+    loadParkingLot();
+  </script>
+</body>
+</html>
