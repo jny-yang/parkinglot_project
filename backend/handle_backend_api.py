@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from integrate_the_code import initialize, parking, receiving, inspecting
+from integrate_the_code import initialize, parking, retrieving, inspecting
 from PIL import Image, ImageDraw
 import psycopg2
 import os
@@ -91,7 +91,14 @@ def retrieving_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    receiving(parkinglot, entrance, plate)
+    # 讓 receiving() 回傳狀態
+    result = receiving(parkinglot, entrance, plate)
+    if result == -1:
+        return jsonify({
+            "success": False,
+            "message": f"找不到此車輛：{plate}"
+        }), 404  # HTTP 狀態碼 404：資源不存在
+    # 預設成功
     return jsonify({
         "success": True,
         "message": f"Car {plate} retrieved.",
