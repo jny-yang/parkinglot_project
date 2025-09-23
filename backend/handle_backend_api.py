@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from integrate_the_code import initialize, parking, receiving, inspecting
+from PIL import Image, ImageDraw
 import psycopg2
+import os
 
 app = Flask(__name__)
 CORS(app)  # 允許跨來源請求
