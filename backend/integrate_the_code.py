@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from park_the_car import FindingEmptySpace, CalculateExchangeCount, InspectWholeStatus, AdjustSpaceAllocation
-from retrieve_the_car import FindingRoute, EvaluateAlgorithm, SimplifyRoutes
+from retrieve_the_car import FindingRoute, SimplifyRoutes
 from connect_to_database import InteractWithDatabase
 
 # 初始化
@@ -23,7 +23,7 @@ def parking(parkinglot, entrance, car_id):
     C = InspectWholeStatus()
     D = AdjustSpaceAllocation()
     H = InteractWithDatabase()
-    
+
     keep_searching_space = False
     all_moving_step = list()
     parkinglot = H.read(parkinglot)
@@ -63,12 +63,12 @@ def parking(parkinglot, entrance, car_id):
 
 
 # <取車>
-def receiving(parkinglot, entrance, car_id):
+def retrieving(parkinglot, entrance, car_id):
     B = CalculateExchangeCount()
     E = FindingRoute()
     G = SimplifyRoutes()
     H = InteractWithDatabase()
-    
+
     moving_status_list = list()
     move_status = list()
     step_list = list()
@@ -82,14 +82,17 @@ def receiving(parkinglot, entrance, car_id):
     # car_id = input("請輸入要取出的車輛")
     count, moving_step = B.process(parkinglot, car_id, entrance, "counts")
     # if algorithm == "BFS":
-    if count == 0:
+    if count == None:
+        return -1
+    elif count == 0:
         print("BFS")
         moving_status_list, step_list = B.process(parkinglot, car_id, entrance, "steps")
         # moving_status_list = moving_status_list[1]
         move_status = moving_status_list[-1]
         H.delete_data(car_id)
+        return
     # if algorithm == "AStar":
-    else:
+    elif count > 0:
         print("AStar")
         moving_status_list, step_list = E.process(parkinglot, car_id, entrance)
         print(f"step list before move:{step_list}")
@@ -97,26 +100,28 @@ def receiving(parkinglot, entrance, car_id):
         move_status = moving_status_list[-1]
         H.transfer_data_to_db(move_status)
         H.delete_data(car_id)
-
         # for i in moving_status_list:
         #     for j in i:
         #         print(j)
         #     print("-------------------------")
+        return
 
-    print("final state:")
-    for i in move_status:
-        print(i)
-    print(f"step list:{step_list}")
-    
-    
+    # print("final state:")
+    # for i in move_status:
+    #     print(i)
+    # print(f"step list:{step_list}")
+
+
 # <檢查>
 def inspecting(parkinglot):
     C = InspectWholeStatus()
     H = InteractWithDatabase()
-    
+
     parkinglot = H.read(parkinglot)
     state_after_move, step_after_move = C.EvaluateMoves(parkinglot)
     H.transfer_data_to_db(state_after_move)
     for i in state_after_move:
         print(i)
     print(f"step:{step_after_move}")
+
+
