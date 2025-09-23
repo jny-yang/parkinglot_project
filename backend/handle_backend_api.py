@@ -91,7 +91,7 @@ def retrieving_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    # 讓 receiving() 回傳狀態
+    # 讓 retrieving() 回傳狀態
     result = retrieving(parkinglot, entrance, plate)
     if result == -1:
         return jsonify({
