@@ -66,7 +66,7 @@
 
     async function parkCar() {
       let carId = document.getElementById('carId').value;
-      let res = await fetch('/park', {
+      let res = await fetch('https://parkinglot-backend-xs3p.onrender.com/park', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({car_id: carId})
       });
@@ -81,7 +81,7 @@
 
     async function retrieveCar() {
       let carId = document.getElementById('carId').value;
-      let res = await fetch('/retrieve', {
+      let res = await fetch('https://parkinglot-backend-xs3p.onrender.com/retrieve', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({car_id: carId})
       });
