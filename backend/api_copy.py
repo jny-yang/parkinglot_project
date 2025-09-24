@@ -30,7 +30,7 @@ def initialize_db():
 
 initialize_db()
 
-# --- 生成車子圖片 (static/car1.png) ---
+# --- 生成車子圖片 (static/car.png) ---
 def generate_car_image():
     os.makedirs("static", exist_ok=True)
     car_path = os.path.join("static", "car1.png")
