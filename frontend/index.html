@@ -66,18 +66,6 @@
   <script>
     const lotDiv = document.getElementById('parkingLot');
 
-    async function loadParkingLot() {
-      let res = await fetch('/status');
-      let data = await res.json();
-      lotDiv.innerHTML = '';
-      data.forEach((slot, i) => {
-        let div = document.createElement('div');
-        div.className = 'slot ' + (slot ? 'occupied' : 'empty');
-        div.innerText = slot ? slot : (i+1);
-        lotDiv.appendChild(div);
-      });
-    }
-
     async function parkCar() {
       let carId = document.getElementById('carId').value;
       let res = await fetch('/park', {
