@@ -11,7 +11,7 @@
       padding: 0;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;  /* 改為頂端對齊 */
       height: 100vh;
       overflow: hidden;
     }
@@ -21,7 +21,7 @@
       gap: 5%;
       width: 95vw;
       height: 90vh;
-      align-items: center;
+      align-items: start;  /* 調整為開始對齊 */
     }
     .parking-lot {
       display: grid;
@@ -118,9 +118,11 @@
   </style>
 </head>
 <body>
+  <!-- 將標題放置在 container 外面 -->
+  <h2 style="font-size: 2rem; text-align: center; color: #e2e8f0; margin-bottom: 15px;">停車場狀態</h2>
+
   <div class="container">
     <div>
-      <h2 style="font-size: 2rem; text-align: center; color: #e2e8f0; margin-bottom: 15px;">停車場狀態</h2>
       <div class="parking-lot" id="parkingLot"></div>
     </div>
     <div class="control">
@@ -224,19 +226,4 @@
 
         if (i > 0) {
           const [pr, pc] = path[i - 1];
-          if (r > pr) carIcon.style.transform = "rotate(90deg)";
-          else if (r < pr) carIcon.style.transform = "rotate(-90deg)";
-          else if (c > pc) carIcon.style.transform = "rotate(0deg)";
-          else if (c < pc) carIcon.style.transform = "rotate(180deg)";
-        }
-
-        carIcon.style.left = targetX + "px";
-        carIcon.style.top = targetY + "px";
-        i++;
-      }, 400);
-    }
-
-    loadParkingLot();
-  </script>
-</body>
-</html>
+          if (r > pr) carIcon.style.transform = "
