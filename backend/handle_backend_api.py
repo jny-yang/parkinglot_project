@@ -70,7 +70,7 @@ def generate_car_image():
         draw.line([i, 25, i, 55], fill=(192, 192, 192), width=2)
 
     img.save(car_path)
-    print("已生成新車子圖片 car1.png")
+    print("已生成新車子圖片 car.png")
 
 generate_car_image()
 
