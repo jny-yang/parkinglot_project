@@ -8,8 +8,8 @@ import os
 app = Flask(__name__)
 CORS(app)  # 允許跨來源請求
 
-# ✅ 初始化一個全域的 5x5 停車場
-parking_lot = [None] * 25   # 25 格 (5x5)，一開始都是空的
+# ✅ 初始化一個全域的 3*3 停車場
+parking_lot = [None] * 9   # 9 格 (3*3)，一開始都是空的
 
 def initialize_db():
     # 在啟動 Flask 時檢查並建立資料表
@@ -86,7 +86,7 @@ def parking_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    entrance = (4, 2)  # ✅ 出入口固定 (4,2)
+    entrance = (2, 1)  # ✅ 出入口固定 (2,1)
     parking(parkinglot, entrance, plate)
     return jsonify({
         "success": True,
@@ -99,7 +99,7 @@ def retrieving_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
-    entrance = (4, 2)  # ✅ 出入口固定 (4,2)
+    entrance = (2, 1)  # ✅ 出入口固定 (2,1)
     result = retrieving(parkinglot, entrance, plate)
     if result == -1:
         return jsonify({
