@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>智慧停車系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      text-align: center;
+    }
+    #parkingLot {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-gap: 8px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .slot {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #1e293b;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .occupied {
+      background-color: #ef4444;
+    }
+    .car {
+      width: 40px;
+      height: 40px;
+      background-color: yellow;
+      border-radius: 4px;
+      position: absolute;
+      transition: all 0.5s linear;
+    }
+    #controls {
+      margin: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    #screen {
+      margin-top: 15px;
+      padding: 10px;
+      min-height: 40px;
+      background: #334155;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>智慧停車系統</h1>
+  <div id="controls">
+    <input type="text" id="carId" placeholder="輸入車牌">
+    <button onclick="parkCar()">停車</button>
+    <button onclick="retrieveCar()">取車</button>
+  </div>
+  <div id="screen">狀態顯示區</div>
+  <div id="parkingLot"></div>
+  <div id="car" class="car" style="display:none;"></div>
+
+  <script>
+    async function loadParkingLot() {
+      let res = await fetch('/status');
+      let data = await res.json();
+      let lot = document.getElementById('parkingLot');
+      lot.innerHTML = '';
+      data.forEach((slot, i) => {
+        let div = document.createElement('div');
+        div.classList.add('slot');
+        if (slot !== null) {
+          div.classList.add('occupied');
+          div.innerText = slot;
+        } else {
+          div.innerText = i + 1;
+        }
+        lot.appendChild(div);
+      });
+    }
+
+    async function parkCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/park', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plate: carId})   // ✅ 修正 car_id → plate
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {   // ✅ 後端保留 path
+        createCar();
+        animateCar(msg.path, true);
+      }
+      loadParkingLot();
+    }
+
+    async function retrieveCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/take', {       // ✅ 修正 /retrieve → /take
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plate: carId}) // ✅ 修正 car_id → plate
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {   // ✅ 後端保留 path
+        createCar();
+        animateCar(msg.path, false);
+      }
+      loadParkingLot();
+    }
+
+    function createCar() {
+      let car = document.getElementById('car');
+      car.style.display = 'block';
+      car.style.left = '0px';
+      car.style.top = '0px';
+    }
+
+    function animateCar(path, parking) {
+      let car = document.getElementById('car');
+      let i = 0;
+      function move() {
+        if (i >= path.length) return;
+        let [row, col] = path[i];
+        car.style.left = (col * 70) + 'px';
+        car.style.top = (row * 70) + 'px';
+        i++;
+        setTimeout(move, 500);
+      }
+      move();
+    }
+
+    loadParkingLot();
+  </script>
+</body>
+</html>
