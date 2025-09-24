@@ -36,6 +36,34 @@
   </div>
 
   <script>
+    const gridSize = 5;
+    const lotDiv = document.getElementById('parkingLot');
+    let carIcon;
+
+    function createCar() {
+      if (!carIcon) {
+        carIcon = document.createElement('img');
+        carIcon.src = "/static/car1.png";  // 更新成 car1.png
+        carIcon.className = "car";
+        lotDiv.appendChild(carIcon);
+      }
+      carIcon.style.display = "block";
+    }
+    
+    async function loadParkingLot() {
+      let res = await fetch('/status');
+      let data = await res.json();
+      lotDiv.innerHTML = '';
+      data.forEach((slot, i) => {
+        let div = document.createElement('div');
+        div.className = 'slot ' + (slot ? 'occupied' : 'empty');
+        div.innerText = slot ? slot : i+1;
+        lotDiv.appendChild(div);
+      });
+      if (carIcon) lotDiv.appendChild(carIcon);
+    }
+    
+  <script>
     const lotDiv = document.getElementById('parkingLot');
 
     async function loadParkingLot() {
@@ -72,6 +100,54 @@
       loadParkingLot();
     }
 
+    function animateCar(path, parking = true) {
+      const cellSize = 95;
+      const gap = 12;
+      const stepSize = cellSize + gap;
+      let i = 0;
+
+      const interval = setInterval(() => {
+        if (i >= path.length) {
+          clearInterval(interval);
+          if (parking) {
+            carIcon.style.transition = "transform 0.5s ease";
+            carIcon.style.transform += " scale(0.7)";
+            loadParkingLot(); // 停車後立即刷新
+          } else {
+            carIcon.style.transition = "transform 1s ease, left 1s ease, top 1s ease";
+            carIcon.style.transform = "scale(1.2)";
+            setTimeout(() => {
+              carIcon.style.display = "none";
+              loadParkingLot(); // ✅ 動畫結束後再刷新狀態
+            }, 1000);
+          }
+          return;
+        }
+
+        const [r, c] = path[i];
+        const slots = document.querySelectorAll('.slot');
+        const slot = slots[r*gridSize + c];
+        slot.classList.add("path");
+
+        const rect = slot.getBoundingClientRect();
+        const lotRect = lotDiv.getBoundingClientRect();
+        const targetX = rect.left - lotRect.left + (slot.offsetWidth - carIcon.offsetWidth)/2;
+        const targetY = rect.top - lotRect.top + (slot.offsetHeight - carIcon.offsetHeight)/2;
+
+        if (i > 0) {
+          const [pr, pc] = path[i-1];
+          if (r > pr) carIcon.style.transform = "rotate(90deg)";
+          else if (r < pr) carIcon.style.transform = "rotate(-90deg)";
+          else if (c > pc) carIcon.style.transform = "rotate(0deg)";
+          else if (c < pc) carIcon.style.transform = "rotate(180deg)";
+        }
+
+        carIcon.style.left = targetX + "px";
+        carIcon.style.top = targetY + "px";
+        i++;
+      }, 400);
+    }
+    
     loadParkingLot();
   </script>
 </body>
