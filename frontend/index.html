@@ -24,8 +24,8 @@
 <body>
   <div class="container">
     <div>
-      <h2>停車場狀態</h2>
-      <div class="lot" id="parkingLot"></div>
+      <h2 style="font-size:2rem; text-align:center; color:#e2e8f0; margin-bottom:15px;">停車場狀態</h2>
+      <div class="parking-lot" id="parkingLot"></div>
     </div>
     <div class="controls">
       <div id="screen">請輸入車牌號碼</div>
@@ -74,6 +74,10 @@
       });
       let msg = await res.json();
       document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {
+        createCar();
+        animateCar(msg.path, true);
+      }
       loadParkingLot();
     }
 
