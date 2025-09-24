@@ -8,8 +8,8 @@ import os
 app = Flask(__name__)
 CORS(app)  # 允許跨來源請求
 
-# ✅ 新增：初始化一個全域的 5x5 停車場 (25 格，None 代表空)
-parking_lot = [None] * 25
+# ✅ 初始化一個全域的 5x5 停車場
+parking_lot = [None] * 25   # 25 格 (5x5)，一開始都是空的
 
 def initialize_db():
     # 在啟動 Flask 時檢查並建立資料表
@@ -30,54 +30,9 @@ def initialize_db():
 
 initialize_db()
 
-# --- 生成車子圖片 (static/car1.png) ---
-def generate_car_image():
-    os.makedirs("static", exist_ok=True)
-    car_path = os.path.join("static", "car1.png")
-
-    # 強制覆蓋生成
-    img = Image.new("RGBA", (150, 80), (0, 0, 0, 0))  # 畫布大一點
-    draw = ImageDraw.Draw(img)
-
-    # 車身 (長條 + 前端圓弧)
-    draw.rectangle([20, 20, 130, 60], fill=(0, 51, 102))   # 主體
-    draw.ellipse([130, 20, 150, 60], fill=(0, 51, 102))    # 車頭圓弧
-
-    # 車頂 (弧形棚子)
-    draw.pieslice([20, 0, 130, 60], 0, 180, fill=(0, 51, 102))
-
-    # 車窗 (白色三格)
-    draw.rectangle([35, 10, 55, 25], fill=(255, 255, 255))
-    draw.rectangle([60, 10, 80, 25], fill=(255, 255, 255))
-    draw.rectangle([85, 10, 105, 25], fill=(255, 255, 255))
-
-    # 輪子 (俯視矩形排列：左上、右上、左下、右下)
-    wheel_size = 15
-    wheel_positions = [
-        (25, 10),  # 左上
-        (110, 10), # 右上
-        (25, 55),  # 左下
-        (110, 55)  # 右下
-    ]
-    for x, y in wheel_positions:
-        draw.ellipse([x, y, x + wheel_size, y + wheel_size], fill=(0, 0, 0))
-
-    # 前燈 (黃色圓)
-    draw.ellipse([140, 30, 148, 38], fill=(255, 255, 0))
-    # 後燈 (紅色圓)
-    draw.ellipse([12, 30, 20, 38], fill=(255, 0, 0))
-
-    # 前車頭銀色格柵 (直線條)
-    for i in range(130, 140, 2):
-        draw.line([i, 25, i, 55], fill=(192, 192, 192), width=2)
-
-    img.save(car_path)
-    print("已生成新車子圖片 car1.png")
-
-generate_car_image()
-
-@app.route("/status")
+@app.route("/status", methods=["GET"])
 def status():
+    """回傳目前停車場狀態"""
     return jsonify(parking_lot)
 
 @app.route("/park", methods=["POST"])
@@ -85,6 +40,7 @@ def parking_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
+    entrance = (4, 2)  # ✅ 出入口固定 (4,2)
     parking(parkinglot, entrance, plate)
     return jsonify({
         "success": True,
@@ -97,6 +53,7 @@ def retrieving_event():
     data = request.get_json()
     plate = data.get("plate")
     parkinglot, simulated_parkinglot, entrance = initialize()
+    entrance = (4, 2)  # ✅ 出入口固定 (4,2)
     result = retrieving(parkinglot, entrance, plate)
     if result == -1:
         return jsonify({
@@ -110,4 +67,4 @@ def retrieving_event():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
