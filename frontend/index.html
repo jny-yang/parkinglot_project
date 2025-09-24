@@ -7,177 +7,85 @@
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: #f8fafc;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
+      margin: 0; padding: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; color: white;
     }
-    h1 { margin-bottom: 20px; }
-    #parking-lot {
-      display: grid;
-      grid-template-columns: repeat(5, 60px);
-      grid-template-rows: repeat(5, 60px);
-      gap: 6px;
-      justify-content: center;
-      margin: 20px auto;
-    }
-    .slot {
-      width: 60px;
-      height: 60px;
-      background: #334155;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      color: white;
-      transition: background 0.3s ease;
-      position: relative;
-    }
-    .empty { background: #475569; }
-    .car { background: #22c55e; font-weight: bold; }
-    .path { background: #3b82f6 !important; }
-    .entrance { background: #facc15; color: #000; font-weight: bold; }
-    .moving-car {
-      width: 100%;
-      height: 100%;
-      background: red;
-      border-radius: 8px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      animation: blink 0.3s infinite alternate;
-    }
-    @keyframes blink {
-      from { opacity: 1; }
-      to { opacity: 0.6; }
-    }
-    .controls { margin-top: 20px; }
-    input {
-      padding: 6px;
-      border-radius: 6px;
-      border: none;
-      margin-right: 8px;
-    }
-    button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #3b82f6;
-      color: white;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-    button:hover { background: #2563eb; }
+    .container { display: flex; width: 90%; height: 90%; }
+    .lot { flex: 7; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .controls { flex: 3; display: flex; flex-direction: column; padding: 20px; }
+    .slot { width: 100%; aspect-ratio: 1; display: flex;
+            justify-content: center; align-items: center; border-radius: 8px; font-size: 14px; }
+    .empty { background: #334155; }
+    .occupied { background: #e11d48; }
+    .car { position: absolute; width: 40px; height: 40px; transition: all 1s ease; }
+    button { margin: 5px 0; padding: 10px; border: none; border-radius: 8px;
+             cursor: pointer; font-size: 16px; }
+    #screen { background: #0f172a; padding: 10px; border-radius: 8px;
+              height: 100px; overflow-y: auto; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>智慧停車系統 🚗</h1>
-  <div id="parking-lot"></div>
-  <div class="controls">
-    <input type="text" id="plate" placeholder="輸入車牌號碼">
-    <button onclick="parkCar()">停車</button>
-    <button onclick="takeCar()">取車</button>
+  <div class="container">
+    <div class="lot" id="parkingLot"></div>
+    <div class="controls">
+      <input type="text" id="carId" placeholder="輸入車牌號碼">
+      <button onclick="parkCar()">停車</button>
+      <button onclick="retrieveCar()">取車</button>
+      <div id="screen"></div>
+    </div>
   </div>
 
   <script>
-    const ROWS = 5, COLS = 5;
-    const entrance = [4, 2]; // 出入口固定
-    let parkingLot = [];
+    const lotDiv = document.getElementById('parkingLot');
+    let carIcon;
 
-    async function fetchStatus() {
-      const res = await fetch('/status');
-      parkingLot = await res.json();
-      renderLot();
+    function createCar() {
+      if (!carIcon) {
+        carIcon = document.createElement('img');
+        carIcon.src = "/static/car1.png";
+        carIcon.className = "car";
+        lotDiv.appendChild(carIcon);
+      }
+      carIcon.style.display = "block";
     }
 
-    function renderLot(path = [], movingPlate = null) {
-      const lotDiv = document.getElementById("parking-lot");
-      lotDiv.innerHTML = "";
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-          const div = document.createElement("div");
-          div.classList.add("slot");
-
-          if (r === entrance[0] && c === entrance[1]) {
-            div.classList.add("entrance");
-            div.textContent = "🚪";
-          } else if (parkingLot[r][c]) {
-            div.classList.add("car");
-            div.textContent = parkingLot[r][c];
-          } else {
-            div.classList.add("empty");
-          }
-
-          // 路徑顯示
-          if (path.some(([pr, pc]) => pr === r && pc === c)) {
-            div.classList.add("path");
-          }
-
-          // 移動中的車子顯示
-          if (movingPlate && path.length > 0) {
-            const [cr, cc] = path[0];
-            if (r === cr && c === cc) {
-              const carDiv = document.createElement("div");
-              carDiv.classList.add("moving-car");
-              carDiv.textContent = movingPlate;
-              div.innerHTML = "";
-              div.appendChild(carDiv);
-            }
-          }
-
-          lotDiv.appendChild(div);
-        }
-      }
-    }
-
-    // 車子動畫：依序經過 path
-    async function animateCar(path, plate, finalUpdate) {
-      for (let i = 0; i < path.length; i++) {
-        renderLot(path.slice(0, i+1), plate);
-        await new Promise(res => setTimeout(res, 500)); // 移動速度
-      }
-      // 最後更新停車場狀態
-      parkingLot = finalUpdate;
-      renderLot();
+    async function loadParkingLot() {
+      let res = await fetch('/status');
+      let data = await res.json();
+      lotDiv.innerHTML = '';
+      data.forEach((slot, i) => {
+        let div = document.createElement('div');
+        div.className = 'slot ' + (slot ? 'occupied' : 'empty');
+        div.innerText = slot ? slot : i+1;
+        lotDiv.appendChild(div);
+      });
+      if (carIcon) lotDiv.appendChild(carIcon);
     }
 
     async function parkCar() {
-      const plate = document.getElementById("plate").value.trim();
-      if (!plate) return alert("請輸入車牌號碼");
-      const res = await fetch('/park', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plate })
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/park', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plate: carId})  // ✅ 用 plate
       });
-      const data = await res.json();
-      if (!data.success) {
-        alert(data.message);
-      } else {
-        await animateCar(data.path, plate, data.slots);
-      }
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      loadParkingLot();
     }
 
-    async function takeCar() {
-      const plate = document.getElementById("plate").value.trim();
-      if (!plate) return alert("請輸入車牌號碼");
-      const res = await fetch('/take', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plate })
+    async function retrieveCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch('/take', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({plate: carId})  // ✅ 用 plate
       });
-      const data = await res.json();
-      if (!data.success) {
-        alert(data.message);
-      } else {
-        await animateCar(data.path, plate, data.slots);
-      }
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      loadParkingLot();
     }
 
-    fetchStatus();
+    loadParkingLot();
   </script>
 </body>
 </html>
