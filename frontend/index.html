@@ -118,11 +118,9 @@
   </style>
 </head>
 <body>
-  <!-- 將標題放置在 container 外面 -->
-  <h2 style="font-size: 2rem; text-align: center; color: #e2e8f0; margin-bottom: 15px;">停車場狀態</h2>
-
   <div class="container">
     <div>
+      <h2 style="font-size: 2rem; text-align: center; color: #e2e8f0; margin-bottom: 15px;">停車場狀態</h2>
       <div class="parking-lot" id="parkingLot"></div>
     </div>
     <div class="control">
@@ -132,10 +130,9 @@
       <button class="retrieve-btn" onclick="retrieveCar()">⛔ 取車</button>
     </div>
   </div>
-  
-const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
 
   <script>
+    const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
     const gridSize = 3;  // 停車格數量設定為 3x3
     const lotDiv = document.getElementById('parkingLot');
     let carIcon;
@@ -195,7 +192,6 @@ const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
     function animateCar(path, parking = true) {
       const cellSize = 95;
       const gap = 12;
-      const stepSize = cellSize + gap;
       let i = 0;
 
       const interval = setInterval(() => {
@@ -228,4 +224,19 @@ const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
 
         if (i > 0) {
           const [pr, pc] = path[i - 1];
-          if (r > pr) carIcon.style.transform = "
+          if (r > pr) carIcon.style.transform = "rotate(90deg)";
+          else if (r < pr) carIcon.style.transform = "rotate(-90deg)";
+          else if (c > pc) carIcon.style.transform = "rotate(0deg)";
+          else if (c < pc) carIcon.style.transform = "rotate(180deg)";
+        }
+
+        carIcon.style.left = targetX + "px";
+        carIcon.style.top = targetY + "px";
+        i++;
+      }, 400);
+    }
+
+    loadParkingLot();
+  </script>
+</body>
+</html>
