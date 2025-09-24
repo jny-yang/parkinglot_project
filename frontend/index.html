@@ -2,56 +2,23 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>智慧停車系統</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      margin: 0; padding: 0;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; color: white;
-    }
-    .container { display: flex; width: 90%; height: 90%; }
-    .lot {
-      flex: 7;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      padding: 20px;
-    }
-    .controls {
-      flex: 3;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      align-items: center;
-    }
-    .slot {
-      display: flex; justify-content: center; align-items: center;
-      border-radius: 8px; font-size: 16px; font-weight: bold;
-      color: white;
-    }
-    .empty { background: #22c55e; }   /* 綠色：空位 */
-    .occupied { background: #ef4444; } /* 紅色：有車 */
-    h2 { text-align: center; margin-bottom: 20px; }
-    button {
-      margin: 5px 0; padding: 10px 20px;
-      border: none; border-radius: 8px;
-      cursor: pointer; font-size: 16px;
-      width: 200px;
-    }
-    .park-btn { background: #3b82f6; color: white; }
-    .take-btn { background: #f97316; color: white; }
-    #screen {
-      background: #0f172a; padding: 10px; border-radius: 8px;
-      height: 100px; overflow-y: auto; margin-top: 10px;
-      width: 250px; text-align: center;
-    }
-    input {
-      padding: 10px; border-radius: 8px;
-      border: none; margin-bottom: 10px;
-      width: 200px; text-align: center;
-    }
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b);
+      margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+    .container { display:grid; grid-template-columns:65% 30%; gap:5%; width:95vw; height:90vh; align-items:center; }
+    .parking-lot { display:grid; grid-template-columns:repeat(5,95px); grid-gap:12px; justify-content:center; align-items:center; position:relative; }
+    .slot { width:95px; height:95px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+    .occupied { background:#ef4444; color:white; }
+    .empty { background:#22c55e; color:white; }
+    .path { background:#3b82f6 !important; }
+    .control { background:#0f172a; border-radius:15px; padding:20px; display:flex; flex-direction:column; gap:18px; align-items:center; height:100%; box-shadow:0 6px 15px rgba(0,0,0,0.4); }
+    .screen { background:#19183B; color:#E7F2EF; font-family:monospace; text-align:center; padding:15px; border-radius:10px; width:100%; font-size:1.3rem; flex-shrink:0; box-shadow:inset 0 0 8px rgb(161, 194, 189); }
+    input { font-size:1.2rem; border-radius:10px; padding:12px; width:90%; border:none; outline:none; background:#1e293b; color:#e2e8f0; box-shadow:inset 0 2px 5px rgba(0,0,0,0.5); }
+    button { font-size:1.2rem; border-radius:12px; padding:12px; width:90%; border:none; cursor:pointer; color:white; font-weight:bold; box-shadow:0 4px 10px rgba(0,0,0,0.3); transition:transform 0.2s ease, box-shadow 0.3s ease; }
+    button:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,0.5); }
+    .park-btn { background:linear-gradient(135deg, #2563eb, #3b82f6); }
+    .retrieve-btn { background:linear-gradient(135deg, #ea580c, #f97316); }
+    .car { width:50px; height:50px; position:absolute; transition:transform 0.3s ease, left 0.3s ease, top 0.3s ease; z-index:10; transform-origin:center; }
   </style>
 </head>
 <body>
@@ -61,10 +28,10 @@
       <div class="lot" id="parkingLot"></div>
     </div>
     <div class="controls">
-      <div id="screen">請輸入車牌操作</div>
-      <input type="text" id="carId" placeholder="輸入車牌號碼">
+      <div id="screen">請輸入車牌號碼</div>
+      <input type="text" id="carId" placeholder="車牌號碼，例:BMS1866">
       <button class="park-btn" onclick="parkCar()">🚗 停車</button>
-      <button class="take-btn" onclick="retrieveCar()">➖ 取車</button>
+      <button class="take-btn" onclick="retrieveCar()">⛔ 取車</button>
     </div>
   </div>
 
