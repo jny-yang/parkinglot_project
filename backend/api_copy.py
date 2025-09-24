@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+CORS(app, origins=["https://parkinglot-project.onrender.com"])
 from heapq import heappush, heappop
 
 app = Flask(__name__)
