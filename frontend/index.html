@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+  <title>智慧停車系統</title>
   <meta charset="UTF-8">
   <style>
     body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -51,7 +52,7 @@
     }
     
     async function loadParkingLot() {
-      let res = await fetch('/status');
+      let res = await fetch('https://parkinglot-backend-xs3p.onrender.com/status');
       let data = await res.json();
       lotDiv.innerHTML = '';
       data.forEach((slot, i) => {
