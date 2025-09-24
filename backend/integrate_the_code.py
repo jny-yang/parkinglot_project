@@ -8,9 +8,9 @@ from connect_to_database import InteractWithDatabase
 def initialize():
     global width
     global height
-    width = 5
-    height = 5
-    parkinglot = [[' ' for j in range(0, 5)] for i in range(0, 5)]
+    width = 3
+    height = 3
+    parkinglot = [[' ' for j in range(0, 3)] for i in range(0, 3)]
     entrance = (len(parkinglot) - 1, len(parkinglot[0]) // 2)
     simulated_parkinglot = deepcopy(parkinglot)
     return parkinglot, simulated_parkinglot, entrance
@@ -26,6 +26,9 @@ def parking(parkinglot, entrance, car_id):
 
     keep_searching_space = False
     all_moving_step = list()
+    temp_list = list()
+    test_list = list()
+    final_list = list()
     parkinglot = H.read(parkinglot)
     for i in parkinglot:
         print(i)
@@ -48,6 +51,14 @@ def parking(parkinglot, entrance, car_id):
                 print(i)
             all_moving_step.append(moving_step)
             H.add_single_data(parkinglot, car_id)
+            print(f"moving_step:{moving_step}")
+            for i in moving_step:
+                if i[0] == car_id:
+                    temp_list.append(i)
+            all_moving_step.append(temp_list)
+            print(f"all_moving_step:{all_moving_step}")
+            return all_moving_step
+
         else: # 否，進入後續處理(找尋其他座標)
             keep_searching_space = True
             parkinglot, all_moving_step = D.findAvailableParkingSpace(keep_searching_space, position, parkinglot, car_id)
@@ -58,8 +69,17 @@ def parking(parkinglot, entrance, car_id):
                 H.transfer_data_to_db(parkinglot)
                 for i in parkinglot:
                     print(i)
-                print("all_moving_step:")
-                print(all_moving_step)
+                for i in all_moving_step:
+                    temp_list.append(i[0])
+                # print(f"temp_list:{temp_list}")
+                for i in temp_list:
+                    if i[0] == car_id:
+                        test_list.append(i)
+                # print(f"test_list:{test_list}")
+                final_list.append(temp_list)
+                final_list.append(test_list)
+                # print(f"final_list:{final_list}")
+                return final_list
 
 
 # <取車>
@@ -72,27 +92,48 @@ def retrieving(parkinglot, entrance, car_id):
     moving_status_list = list()
     move_status = list()
     step_list = list()
+    temp_list = list()
+    final_list = list()
+    have_car = False
 
     parkinglot = H.read(parkinglot)
     print("從資料庫讀出來的停車場:")
     for i in parkinglot:
         print(i)
 
+    for i in range(len(parkinglot)):
+        for j in range(len(parkinglot[0])):
+            if parkinglot[i][j] == car_id:
+                have_car = True
+                break
+        if have_car == True:
+            break
+
+    if have_car == False:
+        return -1 # 取不存在停車場中的車
+
     # algorithm = F.chooseTheAlgorithm(parkinglot)
     # car_id = input("請輸入要取出的車輛")
     count, moving_step = B.process(parkinglot, car_id, entrance, "counts")
+    print(f"count:{count}")
     # if algorithm == "BFS":
-    if count == None:
-        return -1
-    elif count == 0:
+    if count == 0:
         print("BFS")
         moving_status_list, step_list = B.process(parkinglot, car_id, entrance, "steps")
         # moving_status_list = moving_status_list[1]
         move_status = moving_status_list[-1]
         H.delete_data(car_id)
-        return
+        for i in step_list:
+            if i[0] == car_id:
+                temp_list.append(i)
+        final_list.append(step_list)
+        final_list.append(temp_list)
+        print(f"step_list:{step_list}")
+        print(f"temp_list:{temp_list}")
+        print(f"final_list:{final_list}")
+        return final_list
     # if algorithm == "AStar":
-    elif count > 0:
+    else:
         print("AStar")
         moving_status_list, step_list = E.process(parkinglot, car_id, entrance)
         print(f"step list before move:{step_list}")
@@ -104,7 +145,15 @@ def retrieving(parkinglot, entrance, car_id):
         #     for j in i:
         #         print(j)
         #     print("-------------------------")
-        return
+        # print(f"step_list:{step_list}")
+        for i in step_list:
+            if i[0] == car_id:
+                temp_list.append(i)
+        final_list.append(step_list)
+        final_list.append(temp_list)
+        # print(f"temp_list:{temp_list}")
+        # print(f"final_list:{final_list}")
+        return final_list
 
     # print("final state:")
     # for i in move_status:
@@ -123,5 +172,6 @@ def inspecting(parkinglot):
     for i in state_after_move:
         print(i)
     print(f"step:{step_after_move}")
+
 
 
