@@ -1,135 +1,128 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from integrate_the_code import initialize, parking, retrieving, inspecting
-from PIL import Image, ImageDraw
-import psycopg2
-import os
+from flask import Flask, render_template, request, jsonify
+from copy import deepcopy
+import heapq
 
 app = Flask(__name__)
-CORS(app)  # 允許跨來源請求
 
-def initialize_db():
-    # 在啟動 Flask 時檢查並建立資料表
-    # conn = psycopg2.connect(**DB_CONFIG) # **為展開 dict
-    external_url = "postgresql://parkinglot_db_hgx4_user:wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7@dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com/parkinglot_db_hgx4"
-    conn = psycopg2.connect(external_url)
-    cursor = conn.cursor()
+ROWS, COLS = 5, 5
 
-    create_table_query = """
-    CREATE TABLE IF NOT EXISTS ParkingRecords (
-        plate_num VARCHAR(10) PRIMARY KEY,
-        slot_num INT NULL
-    );
-    """
-    cursor.execute(create_table_query)
-    conn.commit()
-    cursor.close()
-    conn.close()
+# ----------------- 初始化 -----------------
+def initialize():
+    parkinglot = [[None for _ in range(COLS)] for _ in range(ROWS)]
+    simulated_parkinglot = deepcopy(parkinglot)
+    entrance = (4, 2)  # ✅ 出入口在最後一行中間
+    return parkinglot, simulated_parkinglot, entrance
 
-initialize_db()
+# ----------------- 啟發函數 (曼哈頓距離) -----------------
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-# --- 生成車子圖片 (static/car1.png) ---
-def generate_car_image():
-    os.makedirs("static", exist_ok=True)
-    car_path = os.path.join("static", "car1.png")
+# ----------------- 鄰居搜尋 -----------------
+def get_neighbors(pos):
+    neighbors = []
+    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    for d in directions:
+        nr, nc = pos[0] + d[0], pos[1] + d[1]
+        if 0 <= nr < ROWS and 0 <= nc < COLS:
+            neighbors.append((nr, nc))
+    return neighbors
 
-    # 強制覆蓋生成
-    img = Image.new("RGBA", (150, 80), (0, 0, 0, 0))  # 畫布大一點
-    draw = ImageDraw.Draw(img)
+# ----------------- A* 搜尋路徑 -----------------
+def astar(start, goal, parkinglot):
+    pq = []
+    heapq.heappush(pq, (0 + heuristic(start, goal), 0, start, [start]))
+    visited = set()
+    while pq:
+        est, cost, node, path = heapq.heappop(pq)
+        if node in visited:
+            continue
+        visited.add(node)
+        if node == goal:
+            return path
+        for nb in get_neighbors(node):
+            if parkinglot[nb[0]][nb[1]] is None or nb == goal:
+                heapq.heappush(pq, (cost + 1 + heuristic(nb, goal), cost + 1, nb, path + [nb]))
+    return None
 
-    # 車身 (長條 + 前端圓弧)
-    draw.rectangle([20, 20, 130, 60], fill=(0, 51, 102))   # 主體
-    draw.ellipse([130, 20, 150, 60], fill=(0, 51, 102))    # 車頭圓弧
+# ----------------- 找第一個空車位 -----------------
+def find_empty_slot(parkinglot):
+    for r in range(ROWS):
+        for c in range(COLS):
+            if parkinglot[r][c] is None:
+                return (r, c)
+    return None
 
-    # 車頂 (弧形棚子)
-    draw.pieslice([20, 0, 130, 60], 0, 180, fill=(0, 51, 102))
+# ----------------- 停車 -----------------
+def parking(parkinglot, plate, entrance):
+    empty = find_empty_slot(parkinglot)
+    if not empty:
+        return None, None, "No empty slot available"
+    path = astar(entrance, empty, parkinglot)
+    if not path:
+        return None, None, "No path found"
+    parkinglot[empty[0]][empty[1]] = plate
+    return parkinglot, path, f"Car {plate} parked."
 
-    # 車窗 (白色三格)
-    draw.rectangle([35, 10, 55, 25], fill=(255, 255, 255))
-    draw.rectangle([60, 10, 80, 25], fill=(255, 255, 255))
-    draw.rectangle([85, 10, 105, 25], fill=(255, 255, 255))
+# ----------------- 取車 -----------------
+def retrieving(parkinglot, plate, entrance):
+    target = None
+    for r in range(ROWS):
+        for c in range(COLS):
+            if parkinglot[r][c] == plate:
+                target = (r, c)
+                break
+        if target:
+            break
+    if not target:
+        return None, None, "Car not found"
+    path = astar(target, entrance, parkinglot)
+    if not path:
+        return None, None, "No path found"
+    parkinglot[target[0]][target[1]] = None
+    return parkinglot, path, f"Car {plate} retrieved."
 
-    # 輪子 (俯視矩形排列：左上、右上、左下、右下)
-    wheel_size = 15
-    wheel_positions = [
-        (25, 10),  # 左上
-        (110, 10), # 右上
-        (25, 55),  # 左下
-        (110, 55)  # 右下
-    ]
-    for x, y in wheel_positions:
-        draw.ellipse([x, y, x + wheel_size, y + wheel_size], fill=(0, 0, 0))
+# ----------------- 初始化全域變數 -----------------
+parkinglot, simulated_parkinglot, entrance = initialize()
 
-    # 前燈 (黃色圓)
-    draw.ellipse([140, 30, 148, 38], fill=(255, 255, 0))
-    # 後燈 (紅色圓)
-    draw.ellipse([12, 30, 20, 38], fill=(255, 0, 0))
-
-    # 前車頭銀色格柵 (直線條)
-    for i in range(130, 140, 2):
-        draw.line([i, 25, i, 55], fill=(192, 192, 192), width=2)
-
-    img.save(car_path)
-    print("已生成新車子圖片 car1.png")
-
-generate_car_image()
+# ----------------- 路由 -----------------
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 @app.route("/status")
 def status():
-    return jsonify(parking_lot)
+    return jsonify(parkinglot)
 
 @app.route("/park", methods=["POST"])
-def parking_event():
+def park_event():
+    global parkinglot
     data = request.get_json()
     plate = data.get("plate")
-    parkinglot, simulated_parkinglot, entrance = initialize()
-    parking(parkinglot, entrance, plate)
+    parkinglot, path, message = parking(parkinglot, plate, entrance)
+    if parkinglot is None:
+        return jsonify({"success": False, "message": message})
     return jsonify({
         "success": True,
-        "message": f"Car {plate} parked.",
-        "slots": parkinglot
+        "message": message,
+        "slots": parkinglot,
+        "path": path   # ✅ 回傳 path
     })
 
 @app.route("/take", methods=["POST"])
 def retrieving_event():
+    global parkinglot
     data = request.get_json()
     plate = data.get("plate")
-    parkinglot, simulated_parkinglot, entrance = initialize()
-    # 讓 retrieving() 回傳狀態
-    result = retrieving(parkinglot, entrance, plate)
-    if result == -1:
-        return jsonify({
-            "success": False,
-            "message": f"找不到此車輛：{plate}"
-        }), 404  # HTTP 狀態碼 404：資源不存在
-    # 預設成功
+    parkinglot, path, message = retrieving(parkinglot, plate, entrance)
+    if parkinglot is None:
+        return jsonify({"success": False, "message": message})
     return jsonify({
         "success": True,
-        "message": f"Car {plate} retrieved.",
-        "slots": parkinglot
+        "message": message,
+        "slots": parkinglot,
+        "path": path   # ✅ 回傳 path
     })
 
-# @app.route("/testdb")
-# def test_db():
-#     try:
-#         external_url = "postgresql://parkinglot_db_hgx4_user:wRM4JC6BG0NFvuJqFHFtlfu5m2DatiP7@dpg-d38hk4fdiees73cja7d0-a.oregon-postgres.render.com/parkinglot_db_hgx4"
-#         conn = psycopg2.connect(external_url)
-#         cursor = conn.cursor()
-#         cursor.execute("""
-#         CREATE TABLE IF NOT EXISTS "ParkingRecords" (
-#             plate_num VARCHAR(10) PRIMARY KEY,
-#             slot_num INT);
-#         """)
-#         conn.commit()
-#         # 測試查詢
-#         cursor.execute('SELECT * FROM "ParkingRecords";')
-#         rows = cursor.fetchall()
-
-#         cursor.close()
-#         conn.close()
-#         return {"success": True, "rows": rows, "message": "Table exists or created successfully"}
-#     except Exception as e:
-#         return {"success": False, "error": str(e)}
-    
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
+
