@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>智慧停車系統</title>
   <style>
+  <style>
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -118,88 +119,114 @@
   </style>
 </head>
 <body>
-  <h1>🚗 智慧停車系統</h1>
-  <div id="controls">
-    <input id="plate" placeholder="輸入車牌">
-    <button onclick="parkCar()">🚗停車</button>
-    <button onclick="takeCar()">⛔取車</button>
+  <!-- 將標題放置在 container 外面 -->
+  <h2 style="font-size: 2rem; text-align: center; color: #e2e8f0; margin-bottom: 15px;">停車場狀態</h2>
+
+  <div class="container">
+    <div>
+      <div class="parking-lot" id="parkingLot"></div>
+    </div>
+    <div class="control">
+      <div class="screen" id="screen">請輸入車牌號碼</div>
+      <input type="text" id="carId" placeholder="車牌號碼">
+      <button class="park-btn" onclick="parkCar()">🚗 停車</button>
+      <button class="retrieve-btn" onclick="retrieveCar()">⛔ 取車</button>
+    </div>
   </div>
-  <div id="lot-container">
-    <div id="parking-lot"></div>
-    <div id="car" class="car" style="display:none;"></div>
-  </div>
+  
+const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
 
   <script>
-    const backendURL = "https://parkinglot-backend-xs3p.onrender.com";
-    const rows = 3, cols = 3;
-    const EXIT = [2,1];
-    let carEl = document.getElementById("car");
+    const gridSize = 3;  // 停車格數量設定為 3x3
+    const lotDiv = document.getElementById('parkingLot');
+    let carIcon;
 
-    async function loadStatus() {
-      const res = await fetch(`${backendURL}/status`);
-      const data = await res.json();
-      const lot = document.getElementById("parking-lot");
-      lot.innerHTML = "";
-      for (let i=0;i<rows;i++){
-        for (let j=0;j<cols;j++){
-          const div = document.createElement("div");
-          div.classList.add("slot");
-          if (i===EXIT[0] && j===EXIT[1]) {
-            div.classList.add("entrance");
-            div.innerText = "入口";
-          } else if (data[i][j]) {
-            div.classList.add("occupied");
-            div.innerText = data[i][j];
+    function createCar() {
+      if (!carIcon) {
+        carIcon = document.createElement('img');
+        carIcon.src = "/static/car1.png";  // 更新成 car1.png
+        carIcon.className = "car";
+        lotDiv.appendChild(carIcon);
+      }
+      carIcon.style.display = "block";
+    }
+
+    async function loadParkingLot() {
+      let res = await fetch(`${backendURL}/status`);
+      let data = await res.json();
+      lotDiv.innerHTML = '';
+      data.forEach((slot, i) => {
+        let div = document.createElement('div');
+        div.className = 'slot ' + (slot ? 'occupied' : 'empty');
+        div.innerText = slot ? slot : i + 1;
+        lotDiv.appendChild(div);
+      });
+      if (carIcon) lotDiv.appendChild(carIcon);
+    }
+
+    async function parkCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch(`${backendURL}/park`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({car_id: carId})
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {
+        createCar();
+        animateCar(msg.path, true);
+      }
+      loadParkingLot();
+    }
+
+    async function retrieveCar() {
+      let carId = document.getElementById('carId').value;
+      let res = await fetch(`${backendURL}/take`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({car_id: carId})
+      });
+      let msg = await res.json();
+      document.getElementById('screen').innerText = msg.message;
+      if (msg.path) {
+        createCar();
+        animateCar(msg.path, false);
+      }
+    }
+
+    function animateCar(path, parking = true) {
+      const cellSize = 95;
+      const gap = 12;
+      const stepSize = cellSize + gap;
+      let i = 0;
+
+      const interval = setInterval(() => {
+        if (i >= path.length) {
+          clearInterval(interval);
+          if (parking) {
+            carIcon.style.transition = "transform 0.5s ease";
+            carIcon.style.transform += " scale(0.7)";
+            loadParkingLot(); // 停車後立即刷新
+          } else {
+            carIcon.style.transition = "transform 1s ease, left 1s ease, top 1s ease";
+            carIcon.style.transform = "scale(1.2)";
+            setTimeout(() => {
+              carIcon.style.display = "none";
+              loadParkingLot(); // ✅ 動畫結束後再刷新狀態
+            }, 1000);
           }
-          lot.appendChild(div);
+          return;
         }
-      }
-    }
 
-    function moveCar(path){
-      if (!path || path.length===0) return;
-      carEl.style.display="block";
-      let idx=0;
-      function step(){
-        const [x,y]=path[idx];
-        const lot=document.getElementById("parking-lot");
-        const target=lot.children[x*cols+y];
-        const rect=target.getBoundingClientRect();
-        const lotRect=lot.getBoundingClientRect();
-        carEl.style.left=(rect.left-lotRect.left+15)+"px";
-        carEl.style.top=(rect.top-lotRect.top+15)+"px";
-        idx++;
-        if(idx<path.length) setTimeout(step,500);
-        else setTimeout(()=>carEl.style.display="none",500);
-      }
-      step();
-    }
+        const [r, c] = path[i];
+        const slots = document.querySelectorAll('.slot');
+        const slot = slots[r * gridSize + c];
+        slot.classList.add("path");
 
-    async function parkCar(){
-      const plate=document.getElementById("plate").value;
-      if(!plate) return alert("請輸入車牌");
-      const res=await fetch(`${backendURL}/park`,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({plate})
-      });
-      const data=await res.json();
-      if(data.success){ moveCar(data.path); setTimeout(loadStatus, data.path.length*500); }
-      else alert(data.message);
-    }
+        const rect = slot.getBoundingClientRect();
+        const lotRect = lotDiv.getBoundingClientRect();
+        const targetX = rect.left - lotRect.left + (slot.offsetWidth - carIcon.offsetWidth) / 2;
+        const targetY = rect.top - lotRect.top + (slot.offsetHeight - carIcon.offsetHeight) / 2;
 
-    async function takeCar(){
-      const plate=document.getElementById("plate").value;
-      if(!plate) return alert("請輸入車牌");
-      const res=await fetch(`${backendURL}/take`,{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({plate})
-      });
-      const data=await res.json();
-      if(data.success){ moveCar(data.path); setTimeout(loadStatus, data.path.length*500); }
-      else alert(data.message);
-    }
-
-    loadStatus();
-  </script>
-</body>
-</html>
+        if (i > 0) {
+          const [pr, pc] = path[i - 1];
+          if (r > pr) carIcon.style.transform = "
