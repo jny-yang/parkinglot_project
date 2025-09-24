@@ -74,10 +74,6 @@ def generate_car_image():
 
 generate_car_image()
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
 @app.route("/status")
 def status():
     return jsonify(parking_lot)
