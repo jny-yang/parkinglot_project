@@ -12,43 +12,64 @@
       height: 100vh; color: white;
     }
     .container { display: flex; width: 90%; height: 90%; }
-    .lot { flex: 7; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-    .controls { flex: 3; display: flex; flex-direction: column; padding: 20px; }
-    .slot { width: 100%; aspect-ratio: 1; display: flex;
-            justify-content: center; align-items: center; border-radius: 8px; font-size: 14px; }
-    .empty { background: #334155; }
-    .occupied { background: #e11d48; }
-    .car { position: absolute; width: 40px; height: 40px; transition: all 1s ease; }
-    button { margin: 5px 0; padding: 10px; border: none; border-radius: 8px;
-             cursor: pointer; font-size: 16px; }
-    #screen { background: #0f172a; padding: 10px; border-radius: 8px;
-              height: 100px; overflow-y: auto; margin-top: 10px; }
+    .lot {
+      flex: 7;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      padding: 20px;
+    }
+    .controls {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      align-items: center;
+    }
+    .slot {
+      display: flex; justify-content: center; align-items: center;
+      border-radius: 8px; font-size: 16px; font-weight: bold;
+      color: white;
+    }
+    .empty { background: #22c55e; }   /* 綠色：空位 */
+    .occupied { background: #ef4444; } /* 紅色：有車 */
+    h2 { text-align: center; margin-bottom: 20px; }
+    button {
+      margin: 5px 0; padding: 10px 20px;
+      border: none; border-radius: 8px;
+      cursor: pointer; font-size: 16px;
+      width: 200px;
+    }
+    .park-btn { background: #3b82f6; color: white; }
+    .take-btn { background: #f97316; color: white; }
+    #screen {
+      background: #0f172a; padding: 10px; border-radius: 8px;
+      height: 100px; overflow-y: auto; margin-top: 10px;
+      width: 250px; text-align: center;
+    }
+    input {
+      padding: 10px; border-radius: 8px;
+      border: none; margin-bottom: 10px;
+      width: 200px; text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="lot" id="parkingLot"></div>
+    <div>
+      <h2>停車場狀態</h2>
+      <div class="lot" id="parkingLot"></div>
+    </div>
     <div class="controls">
+      <div id="screen">請輸入車牌操作</div>
       <input type="text" id="carId" placeholder="輸入車牌號碼">
-      <button onclick="parkCar()">停車</button>
-      <button onclick="retrieveCar()">取車</button>
-      <div id="screen"></div>
+      <button class="park-btn" onclick="parkCar()">🚗 停車</button>
+      <button class="take-btn" onclick="retrieveCar()">➖ 取車</button>
     </div>
   </div>
 
   <script>
     const lotDiv = document.getElementById('parkingLot');
-    let carIcon;
-
-    function createCar() {
-      if (!carIcon) {
-        carIcon = document.createElement('img');
-        carIcon.src = "/static/car1.png";
-        carIcon.className = "car";
-        lotDiv.appendChild(carIcon);
-      }
-      carIcon.style.display = "block";
-    }
 
     async function loadParkingLot() {
       let res = await fetch('/status');
@@ -57,17 +78,16 @@
       data.forEach((slot, i) => {
         let div = document.createElement('div');
         div.className = 'slot ' + (slot ? 'occupied' : 'empty');
-        div.innerText = slot ? slot : i+1;
+        div.innerText = slot ? slot : (i+1);
         lotDiv.appendChild(div);
       });
-      if (carIcon) lotDiv.appendChild(carIcon);
     }
 
     async function parkCar() {
       let carId = document.getElementById('carId').value;
       let res = await fetch('/park', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plate: carId})  // ✅ 用 plate
+        body: JSON.stringify({plate: carId})
       });
       let msg = await res.json();
       document.getElementById('screen').innerText = msg.message;
@@ -78,7 +98,7 @@
       let carId = document.getElementById('carId').value;
       let res = await fetch('/take', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({plate: carId})  // ✅ 用 plate
+        body: JSON.stringify({plate: carId})
       });
       let msg = await res.json();
       document.getElementById('screen').innerText = msg.message;
