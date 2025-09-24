@@ -1,12 +1,14 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS  # 引入 CORS 模組
 from integrate_the_code import initialize, parking, retrieving, inspecting
 from PIL import Image, ImageDraw
 import psycopg2
 import os
 
 app = Flask(__name__)
-CORS(app)  # 允許跨來源請求
+
+# ✅ 允許來自前端的請求 (替換為你的前端 URL)
+CORS(app, origins=["https://parkinglot-project.onrender.com"])
 
 # ✅ 初始化一個全域的 3*3 停車場
 parking_lot = [None] * 9   # 9 格 (3*3)，一開始都是空的
