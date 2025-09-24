@@ -52,7 +52,7 @@
     }
 
     async function loadParkingLot() {
-      let res = await fetch('/status');
+      let res = await fetch('https://parkinglot-backend-xs3p.onrender.com/status');
       let data = await res.json();
       lotDiv.innerHTML = '';
       data.forEach((slot, i) => {
