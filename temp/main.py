@@ -49,9 +49,11 @@ def initialize(first_input):
     return parkinglot, simulated_parkinglot, entrance
 
 # <停車>
-def parking(parkinglot, entrance):
+def parking(parkinglot, entrance, car_id):
     keep_searching_space = False
     all_moving_step = list()
+
+    print("1")
 
     parkinglot = H.read(parkinglot)
     for i in parkinglot:
@@ -65,7 +67,7 @@ def parking(parkinglot, entrance):
     elif position == None:
         print("所有停車位皆滿")
     else: # 停車場還有位置
-        car_id = input("請輸入要停放的車輛")
+        # car_id = input("請輸入要停放的車輛")
         parkinglot[entrance[0]][entrance[1]] = car_id
         count, moving_step = B.process(parkinglot, car_id, position, "counts")
         if count == 0: # 是，直接執行<停車>
@@ -75,6 +77,7 @@ def parking(parkinglot, entrance):
                 print(i)
             all_moving_step.append(moving_step)
             H.add_single_data(parkinglot, car_id)
+            print(all_moving_step)
         else: # 否，進入後續處理(找尋其他座標)
             keep_searching_space = True
             parkinglot, all_moving_step = D.findAvailableParkingSpace(keep_searching_space, position, parkinglot, car_id)
@@ -88,8 +91,11 @@ def parking(parkinglot, entrance):
                 print("all_moving_step:")
                 print(all_moving_step)
 
+        return all_moving_step
+
+
 # <取車>
-def receiving(parkinglot, entrance):
+def receiving(parkinglot, entrance, car_id):
     moving_status_list = list()
     move_status = list()
     step_list = list()
@@ -100,7 +106,7 @@ def receiving(parkinglot, entrance):
         print(i)
 
     # algorithm = F.chooseTheAlgorithm(parkinglot)
-    car_id = input("請輸入要取出的車輛")
+    # car_id = input("請輸入要取出的車輛")
     count, moving_step = B.process(parkinglot, car_id, entrance, "counts")
     # if algorithm == "BFS":
     if count == 0:
@@ -128,6 +134,7 @@ def receiving(parkinglot, entrance):
     for i in move_status:
         print(i)
     print(f"step list:{step_list}")
+    return step_list
 
 # <檢查>
 def inspecting(parkinglot):
@@ -151,7 +158,14 @@ if __name__ == '__main__':
     H = InteractWithDatabase()
 
     # parkinglot, simulated_parkinglot, entrance = initialize(True)
-    # parking(parkinglot, entrance)
+    parkinglot = [[' ' for i in range(0,3)] for j in range(0,3)]
+    simulated_parkinglot = [[' ' for i in range(0,3)] for j in range(0,3)]
+    entrance = (2,1)
+    car_id = 'd'
+    step = parking(parkinglot, entrance, car_id)
+    step = receiving(parkinglot, entrance, car_id)
+
+
     #
     # for i in range(0,3):
     #     parkinglot, simulated_parkinglot, entrance = initialize(False)
@@ -164,9 +178,9 @@ if __name__ == '__main__':
     # inspecting(parkinglot)
 
     # # 將資料庫中資料全數清除
-    H.clear_all_data()
+    # H.clear_all_data()
 
-    H.close_cursor()
+    # H.close_cursor()
 
 
 
