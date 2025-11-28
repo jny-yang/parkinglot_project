@@ -53,8 +53,6 @@ def parking(parkinglot, entrance, car_id):
     keep_searching_space = False
     all_moving_step = list()
 
-    print("1")
-
     parkinglot = H.read(parkinglot)
     for i in parkinglot:
         print(i)
@@ -91,7 +89,7 @@ def parking(parkinglot, entrance, car_id):
                 print("all_moving_step:")
                 print(all_moving_step)
 
-        return all_moving_step
+        return all_moving_step[0]
 
 
 # <取車>
@@ -161,9 +159,10 @@ if __name__ == '__main__':
     parkinglot = [[' ' for i in range(0,3)] for j in range(0,3)]
     simulated_parkinglot = [[' ' for i in range(0,3)] for j in range(0,3)]
     entrance = (2,1)
-    car_id = 'd'
-    step = parking(parkinglot, entrance, car_id)
+    car_id = 'c'
+    #step = parking(parkinglot, entrance, car_id)
     step = receiving(parkinglot, entrance, car_id)
+    print(f"step:{step}")
 
 
     #
